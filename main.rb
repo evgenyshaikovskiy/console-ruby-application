@@ -8,15 +8,18 @@ class Application
       'help' => 'help command prints the help screen.',
       'exit' => 'exit command exits the application.',
       'stats' => 'stats command prints number of users in usersdb.',
-      'create' => 'command that create\'s new record in database using user\'s input.',
+      'create' => 'command that create`s new record in database using user`s input.',
       'list' => 'list command shows all records in usersdb.',
       'edit' => 'edit command allows to edit record in usersdb.',
-      'find' => 'find command allows to search record by given parameter.'
+      'find' => 'find command allows to search record by given parameter.',
+      'delete' => 'command delete`s one or multiple users by given parameter.'
     }
     @commands = {
       'help' => method(:print_help),
       'exit' => method(:exit),
-      'stats' => method(:stats)
+      'stats' => method(:stats),
+      'create' => method(:create),
+      'list' => method(:list)
     }
 
     @is_running = true
@@ -90,6 +93,24 @@ class Application
   rescue PG::Error => e
     puts e.message
     exit
+  end
+
+  def create(_parameters)
+    puts 'Input user`s first name:'
+    first_name = gets.chomp.to_s
+    puts 'Input user`s last name:'
+    last_name = gets.chomp.to_s
+    puts 'Input user`s balance:'
+    balance = gets.chomp.to_i
+
+    # add validation
+    puts first_name, last_name, balance
+  end
+
+  def list(_parameters)
+    # fix output
+    result = @con.exec 'SELECT * FROM users;'
+    result.to_a.each { |instance| instance.each { |key, value| p "#{key} #{value}"} }
   end
 end
 
