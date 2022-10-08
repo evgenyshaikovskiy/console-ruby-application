@@ -2,28 +2,13 @@ require 'readline'
 require 'pg'
 
 require_relative 'validation'
+require_relative 'utils'
 
 # Singleton that defines application
 class Application
   def initialize
-    @help_messages = {
-      'help' => 'help command prints the help screen.',
-      'exit' => 'exit command exits the application.',
-      'stats' => 'stats command prints number of users in usersdb.',
-      'create' => 'command that create`s new record in database using user`s input.',
-      'list' => 'list command shows all records in usersdb.',
-      'edit' => 'edit command allows to edit record in usersdb.',
-      'find' => 'find command allows to search record by given parameter.',
-      'delete' => 'command delete`s one or multiple users by given parameter.'
-    }
-    @commands = {
-      'help' => method(:print_help),
-      'exit' => method(:exit),
-      'stats' => method(:stats),
-      'create' => method(:create),
-      'list' => method(:list)
-    }
-
+    @help_messages = ApplicationUtility.help_messages
+    @commands = ApplicationUtility.commands
     @is_running = true
   end
 
