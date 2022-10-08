@@ -1,6 +1,7 @@
 require 'readline'
+require 'pg'
 
-# Class that defines application
+# Singleton that defines application
 class Application
   def initialize
     @help_messages = {
@@ -14,7 +15,8 @@ class Application
     }
     @commands = {
       'help' => method(:print_help),
-      'exit' => method(:exit)
+      'exit' => method(:exit),
+      'stats' => method(:stats)
     }
 
     @is_running = true
@@ -23,17 +25,42 @@ class Application
   def launch
     puts 'Ruby CLI application to work with PostgreSQL batabase.'
     puts 'Print your command or print help command to list available commands.'
-
+    puts 'Connecting to PostgreSQL database.'
+    connect_to_db
+    init_db
     while @is_running
-      input = Readline.readline('> ', true)
-      command_input = input.split(' ')
-      command = command_input.first
-
-      parameters = command_input.length == 2 ? command_input.last : ''
-
-      # refactor that part
-      @commands[command].call(parameters)
+      command, parameters = parse_command
+      execute_command(command, parameters)
     end
+  ensure
+    @con&.close
+  end
+
+  private
+
+  def parse_command
+    input = Readline.readline('> ', true)
+    command_input = input.split(' ', 2)
+    command = command_input.first
+
+    parameters = command_input.length == 2 ? command_input.last : ''
+
+    [command, parameters]
+  end
+
+  def execute_command(command, parameters)
+    if @commands.key?(command)
+      @commands[command].call(parameters)
+    else
+      print_help(command)
+    end
+  end
+
+  def stats(_parameters)
+    result = @con.exec 'SELECT COUNT(*) FROM users;'
+    puts "Count of users is #{result.getvalue(0, 0)}."
+  rescue PG::Error => e
+    puts e.message
   end
 
   def print_help(parameters)
@@ -49,6 +76,20 @@ class Application
   def exit(_parameters)
     @is_running = false
     puts 'Closing the application...'
+  end
+
+  def connect_to_db
+    @con = PG.connect dbname: 'usersdb', user: 'yauheni', password: 'password123'
+  rescue PG::Error => e
+    puts e.message
+  end
+
+  def init_db
+    @con.exec 'CREATE TABLE IF NOT EXISTS
+    users(id SERIAL PRIMARY KEY, first_name VARCHAR(20), last_name VARCHAR(20), balance INTEGER);'
+  rescue PG::Error => e
+    puts e.message
+    exit
   end
 end
 
