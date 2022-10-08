@@ -1,6 +1,8 @@
 require 'readline'
 require 'pg'
 
+require_relative 'validation'
+
 # Singleton that defines application
 class Application
   def initialize
@@ -101,16 +103,29 @@ class Application
     puts 'Input user`s last name:'
     last_name = gets.chomp.to_s
     puts 'Input user`s balance:'
-    balance = gets.chomp.to_i
+    balance = gets.chomp.to_s
 
-    # add validation
-    puts first_name, last_name, balance
+    if Validation.valid_user?(first_name, last_name, balance)
+      @con.exec "INSERT INTO users(first_name, last_name, balance) VALUES('#{first_name}', '#{last_name}', #{balance});"
+      puts 'User successfully added.'
+    else
+      puts 'Invalid input. Try again.'
+    end
+  rescue PG::Error => e
+    puts e.message
   end
 
   def list(_parameters)
-    # fix output
     result = @con.exec 'SELECT * FROM users;'
-    result.to_a.each { |instance| instance.each { |key, value| p "#{key} #{value}"} }
+    string = ''
+    result.to_a.each do |instance|
+      string += '---' * 10
+      string += "\n"
+      instance.each { |key, value| string += "#{key}: #{value}\n" }
+    end
+    puts string
+  rescue PG::Error => e
+    puts e.message
   end
 end
 
