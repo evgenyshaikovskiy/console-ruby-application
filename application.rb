@@ -24,16 +24,16 @@ class Application
 
   private
 
-  def print_user_info
-
+  def print_user_info(_parameters)
+    ApplicationUtility.form_output(@db_manager.select_users)
   end
 
-  def print_icons_info
-
+  def print_icons_info(_parameters)
+    ApplicationUtility.form_output(@db_manager.select_icons)
   end
 
-  def print_pics_info
-
+  def print_pics_info(_parameters)
+    ApplicationUtility.form_output(@db_manager.select_library_pictures)
   end
 
   def print_help(parameters)

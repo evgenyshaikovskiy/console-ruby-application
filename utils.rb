@@ -24,4 +24,14 @@ module ApplicationUtility
       'print-icons-info' => 'command prints information on user and his icons.',
       'print-pics-info' => 'command prints information on user and his library pictures.' }
   end
+
+  def self.form_output(result)
+    string = ''
+    result.to_a.each do |instance|
+      string << '---' * 10
+      string << "\n"
+      instance.each { |key, value| string << "#{key}: #{value}\n" }
+    end
+    puts string
+  end
 end

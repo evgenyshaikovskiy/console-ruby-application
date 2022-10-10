@@ -23,6 +23,39 @@ class DatabaseManager
     puts e.message
   end
 
+  def select_users
+    @connection.exec 'SELECT users.email, users.nickname, users_info.first_name, users_info.last_name,
+      users_info.birthdate, users_info.sex
+      FROM users
+      JOIN users_info ON users_info.user_id = users.id;'
+  rescue PG::Error => e
+    puts e.message
+  end
+
+  def select_icons
+    # as an alterntive could be used without agg functions and grouping
+    @connection.exec "select email, nickname, string_agg(url, ', ') as urls, string_agg(alt_text, ', ') as alt_texts
+    from users_to_pictures
+    join users on users.id = users_to_pictures.user_id
+    join pictures on pictures.id = users_to_pictures.picture_id
+    where users_to_pictures.image_type = 'icon'
+    group by email, nickname;"
+  rescue PG::Error => e
+    puts e.message
+  end
+
+  def select_library_pictures
+    # as an alterntive could be used without agg functions and grouping
+    @connection.exec "select email, nickname, string_agg(url, ', ') as urls, string_agg(alt_text, ', ') as alt_texts
+    from users_to_pictures
+    join users on users.id = users_to_pictures.user_id
+    join pictures on pictures.id = users_to_pictures.picture_id
+    where users_to_pictures.image_type = 'lib'
+    group by email, nickname;"
+  rescue PG::Error => e
+    puts e.message
+  end
+
   private
 
   def delete_relations_data
