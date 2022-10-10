@@ -1,0 +1,10 @@
+picture_id,user_id,image_type
+1,1,icon
+3,2,icon
+2,3,icon
+7,4,icon
+6,5,icon
+4,1,lib
+5,1,lib
+3,3,lib
+4,3,lib
