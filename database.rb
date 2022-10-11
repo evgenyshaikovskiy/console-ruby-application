@@ -16,7 +16,7 @@ class DatabaseManager
     birthdate DATE, sex VARCHAR(10), user_id INTEGER REFERENCES users(id));'
     @connection.exec 'CREATE TABLE IF NOT EXISTS pictures(id SERIAL PRIMARY KEY, url VARCHAR(50), alt_text VARCHAR(30));'
     @connection.exec 'CREATE TABLE IF NOT EXISTS users_to_pictures(picture_id INTEGER REFERENCES pictures(id),
-    user_id INTEGER REFERENCES users(id), image_type VARCHAR(20));'
+    user_id INTEGER REFERENCES users(id), image_type VARCHAR(20), update_time TIMESTAMP);'
     delete_relations_data
     load_presaved_data
   rescue PG::Error => e
@@ -34,12 +34,21 @@ class DatabaseManager
 
   def select_icons
     # as an alterntive could be used without agg functions and grouping
-    @connection.exec "select email, nickname, string_agg(url, ', ') as urls, string_agg(alt_text, ', ') as alt_texts
-    from users_to_pictures
-    join users on users.id = users_to_pictures.user_id
-    join pictures on pictures.id = users_to_pictures.picture_id
-    where users_to_pictures.image_type = 'icon'
-    group by email, nickname;"
+    @connection.exec "WITH current_icons AS (SELECT picture_id, user_id, update_time
+    FROM (SELECT user_id, picture_id, update_time, image_type, ROW_NUMBER()
+    OVER (PARTITION BY user_id ORDER BY update_time DESC) AS rn FROM users_to_pictures WHERE image_type='icon')
+    AS tmp WHERE rn=1),
+    icons_info AS (SELECT url as current_icon_url, alt_text as current_icon_alt_text, update_time as updated_at,
+    user_id FROM current_icons
+    JOIN pictures ON pictures.id = current_icons.picture_id)
+    SELECT email, nickname, string_agg(url, ', ') AS urls,
+    string_agg(alt_text, ', ') AS alt_texts, current_icon_url, current_icon_alt_text
+    FROM users_to_pictures
+    JOIN users on users.id = users_to_pictures.user_id
+    JOIN pictures on pictures.id = users_to_pictures.picture_id
+    JOIN icons_info on icons_info.user_id = users.id
+    WHERE users_to_pictures.image_type = 'icon'
+    group by email, nickname, current_icon_url, current_icon_alt_text;"
   rescue PG::Error => e
     puts e.message
   end
